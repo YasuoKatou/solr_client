@@ -1,0 +1,117 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+}
+
+#body {
+  width: 100%; height: 100%;
+}
+
+#ap_contents {
+  position: relative;
+  width: 100%; height: 100%;
+}
+
+.page {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+
+h3 {
+  margin: 1em 0;
+  text-align: center;
+}
+h3:after {
+  content: "【デモ版】";
+}
+
+em {
+  background-color: #ffff66;
+  font-weight: bold;
+}
+
+/**
+ * ページの表示／非表示を制御
+ */
+.page_hidden {
+  display: none!important;
+}
+
+.string-transparence {
+  opacity: 0;
+}
+
+/*******************************
+ * 入力フォーム
+ */
+form {
+  width: 80%;
+  margin: 0 auto;
+  border: ridge;
+  border-radius: 10px;
+  padding: 10px 0 10px 0
+}
+
+form .title {
+  color: blue;
+  text-align: right;
+  padding-right: 0.4em;
+  font-size: 0.9em;
+}
+
+form input[type="text"] {
+  width: 50%;
+}
+
+form input[type="date"] {
+  width: 11em;
+}
+
+/* 検索条件入力 */
+form > div:nth-child(1) {
+  display: grid;
+  grid-template-columns: 6em 1fr;
+  grid-row-gap: 10px;
+}
+
+/* 検索条件ボタン */
+form > div:nth-child(2) {
+  margin-top: 40px;
+  text-align: center;
+}
+
+form button {
+  margin: 5px;
+  width: 7em;
+}
+
+/**
+ * 検索結果１データブロック
+ * イベントのキーワードとしても使用する
+ */
+.result-item {
+  width: 80%;
+  margin: 1em auto 0 auto;
+  font-size: 90%;
+}
+
+/**
+ * 検索結果のアンカータグ
+ */
+.resource-anchor {
+  font-size: small;
+  text-decoration: none;
+}
+.resource-anchor:before {
+  content: "⇒ ";
+}
