@@ -17,8 +17,8 @@ var _s_form_inp = [
   }
 ];
 var _s_form_btn = [
-  {  type: 'inp-submit'
-   , id: 'btn-search', text: '検索'}
+  {  type: 'inp-submit', id: 'btn-search-doc', text: '文書検索'}
+, {  type: 'inp-submit', id: 'btn-search-rss', text: 'RSS検索'}
 , {  type: 'inp-reset', text: 'クリア'}
 ];
 
@@ -73,7 +73,6 @@ var r_item_hl = {
  , position: 'beforeend'
  , content: ''
 };
-
 
 /****
  * 各ページの定義
@@ -218,12 +217,35 @@ MyApp.prototype.resetActivateForm = function(self) {
   forms[0].reset();
 };
 /**
- * サーバ通信を行う
+ * サーバ通信(文書検索)を行う
  * @since 2019/4/11
  */
-MyApp.prototype.serverComm = function(self, path, proc) {
+MyApp.prototype.serverComm4Doc = function(self, path, proc) {
   var ac = self.apConfig;
-  var url = 'http://' + location.hostname + ac.uri + '?' + path + ac.highlighting;
+  var url = 'http://' + location.hostname + ac.uri_doc + '?' + path + ac.highlighting + ac.doc_search_options;
+  console.log(url);
+  self.fw.ajax(self.fw, {
+    url: url
+  , timeout: ac.comm_timer
+  , method: 'GET'
+  , req_data: null
+  , success: function(data) {
+      //console.log(data);
+      proc(self, data);
+    }
+  , failure: function(message) {
+      console.log('server request failure');
+      // todo 20190530 エラー処理の実装
+    }
+  });
+};
+/**
+ * サーバ通信(RSS検索)を行う
+ * @since 2019/7/14
+ */
+MyApp.prototype.serverComm4Rss = function(self, path, proc) {
+  var ac = self.apConfig;
+  var url = 'http://' + location.hostname + ac.uri_rss + '?' + path + ac.rss_search_options;
   console.log(url);
   self.fw.ajax(self.fw, {
     url: url
@@ -248,10 +270,10 @@ MyApp.prototype.editSearchRequest = function(self, vals) {
   return 'q=' + encodeURI(vals['search-word']);
 };
 /**
- * 検索行う.
+ * 文書検索行う.
  * @since 2019/5/28
  */
-MyApp.prototype.EM_doSearch = function(self, vals) {
+MyApp.prototype.EM_doSearch_doc = function(self, vals) {
   console.log(vals);
   // 入力を確認
   if (vals['search-word'] == '') {
@@ -262,13 +284,13 @@ MyApp.prototype.EM_doSearch = function(self, vals) {
   req = self.editSearchRequest(self, vals);
   console.log(req);
   // サーバに検索要求
-  self.serverComm(self, req, self.searchResult);
+  self.serverComm4Doc(self, req, self.docSearchResult);
 };
 /**
- * 検索結果を一覧に表示する.
+ * 文書検索結果を一覧に表示する.
  * @since 2019/6/1
  */
-MyApp.prototype.searchResult = function(self, rxData) {
+MyApp.prototype.docSearchResult = function(self, rxData) {
   console.log(rxData);
   var list = document.getElementById('s-resp');
   list.textContent = '';
@@ -289,7 +311,12 @@ MyApp.prototype.searchResult = function(self, rxData) {
     link['text'] = wk[wk.length-1];
     item['data'] = {resource: path};
     var hl = fw.deepCopy(r_item_hl);
-    hl.content = self.editForResult(rxData.highlighting[rec.id].content[0]);
+    var c = rxData.highlighting[rec.id].content;
+    if (c) {
+      hl.content = self.editForResult(c[0]);
+    } else {
+      hl.content = rec.id;
+    }
     item['child'].push(hl);
     item['child'].push(link);
     view['child'].push(item);
@@ -301,10 +328,15 @@ MyApp.prototype.searchResult = function(self, rxData) {
  * @since 2019/6/1
  */
 MyApp.prototype.EM_selectResultItem = function(self, target) {
-  console.log(target.dataset.resource);
+  var ds = target.dataset.resource;
+  console.log(ds);
+  if (ds.startsWith('http')) {
+    window.open(ds);
+    return;
+  }
 
   var we = self.fw.findElement('#clipboard-data');
-  we.textContent = target.dataset.resource;
+  we.textContent = ds;
   var selection = window.getSelection();
   var range = document.createRange();
   range.selectNodeContents(we);
@@ -327,6 +359,54 @@ MyApp.prototype.editForResult = function(str) {
   wk = wk.replace(/　/g, ' ');
   return wk.replace(/( )\1+/g, '') + '<br/>';
 };
+/**
+ * RSS検索行う.
+ * @since 2019/7/14
+ */
+MyApp.prototype.EM_doSearch_rss = function(self, vals) {
+  console.log(vals);
+  // 入力を確認
+  if (vals['search-word'] == '') {
+    alert('[必須]検索文字列を入力して下さい');
+    return;
+  }
+  // リクエストデータの編集
+  req = self.editSearchRequest(self, vals);
+  console.log(req);
+  // サーバに検索要求
+  self.serverComm4Rss(self, req, self.rssSearchResult);
+};
+/**
+ * RSS検索結果を一覧に表示する.
+ * @since 2019/7/14
+ */
+MyApp.prototype.rssSearchResult = function(self, rxData) {
+  console.log(rxData);
+  var list = document.getElementById('s-resp');
+  list.textContent = '';
+  var view = r_item_view;
+  view['child'] = [];
+  var fw = self.fw;
+  for (var rec of rxData.response.docs) {
+    var item = fw.deepCopy(r_item);
+    item['child'] = [];
+  //   if (!('attr_resourcename' in rec)) {
+  //     console.log('no attr_resourcename\n' + rec);
+  //     continue;
+  //   }
+  //   var wk = path.split('\\');
+    // var link = fw.deepCopy(r_item_link);
+    // link['href'] = '#';
+  //   link['text'] = wk[wk.length-1];
+    item['data'] = {resource: rec.og_url};
+    var hl = fw.deepCopy(r_item_hl);
+    hl.content = self.editForResult(rec.title[0]);
+    item['child'].push(hl);
+    // item['child'].push(link);
+    view['child'].push(item);
+  }
+  var elm = fw.make_view(fw, view);
+};
 
 
 
@@ -345,16 +425,29 @@ _evtMap.push({
   }
 });
 /**
- * 【イベント定義】「検索」ボタン押下
+ * 【イベント定義】「文書検索」ボタン押下
  * @since 2019/5/28
  */
 _evtMap.push({
   type: 'click'
-, id_targets: ['btn-search']
+, id_targets: ['btn-search-doc']
 , process: function(fw, evt, target, app) {
     // 検索処理
     var vals = fw.findFormValues(fw, target);
-    app.EM_doSearch(app, vals);
+    app.EM_doSearch_doc(app, vals);
+  }
+});
+/**
+ * 【イベント定義】「RSS検索」ボタン押下
+ * @since 2019/7/14
+ */
+_evtMap.push({
+  type: 'click'
+, id_targets: ['btn-search-rss']
+, process: function(fw, evt, target, app) {
+    // 検索処理
+    var vals = fw.findFormValues(fw, target);
+    app.EM_doSearch_rss(app, vals);
   }
 });
 /**
@@ -393,12 +486,15 @@ var _ap_config = {
   // その他のビュー
 , other_view: undefined
 
-, uri: '/solr/files/select'
+, uri_doc: '/solr/files/select'
+, doc_search_options: '&fl=id%2Cattr_resourcename'
 , highlighting: '&hl=on&hl.fl=content'
 /*
 , server_uri: 'http://192.168.3.4/solr/ykato/select'
 , server_uri: 'http://localhost:8983/solr/ykato/select'
 */
+, uri_rss: '/solr/web_test/select'
+, rss_search_options: '&fl=id%2Cog_url%2Ctitle'
 , request_header: {}
 , comm_timer: 10000
 
