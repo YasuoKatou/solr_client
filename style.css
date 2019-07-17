@@ -115,3 +115,18 @@ form button {
 .resource-anchor:before {
   content: "⇒ ";
 }
+
+.s-result {
+  width: 80%;
+  margin: 30px auto 0px auto;
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr 50px;
+}
+
+.prev-page {
+  text-align: left;
+}
+
+.next-page {
+  text-align: right;
+}

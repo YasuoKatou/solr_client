@@ -21,6 +21,12 @@ var _s_form_btn = [
 , {  type: 'inp-submit', id: 'btn-search-rss', text: 'RSS検索'}
 , {  type: 'inp-reset', text: 'クリア'}
 ];
+var _s_result_status = [
+  {  type: 'pre', text: '前', class: 'prev-page'}
+, {  type: 'pre', text: '結果件数', id: 'search-result-num'}
+, {  type: 'pre', text: '検索時間', id: 'search-time'}
+, {  type: 'pre', text: '次', class: 'next-page'}
+];
 
 var s_page_def = {
   title: 'search setting page'
@@ -39,6 +45,11 @@ var s_page_def = {
     }
   , {  type: 'block'
      , id: 's-resp'
+    }
+  , {
+       type: 'block'
+     , class: 's-result'
+     , child: _s_result_status
     }
   , {  type: 'pre'
      , class: 'string-transparence'
@@ -406,6 +417,11 @@ MyApp.prototype.rssSearchResult = function(self, rxData) {
     view['child'].push(item);
   }
   var elm = fw.make_view(fw, view);
+
+  var elm = document.getElementById('search-time');
+  elm.innerText = '検索時間 : ' + rxData.responseHeader.QTime + ' ms';
+  elm = document.getElementById('search-result-num');
+  elm.innerText = rxData.response.numFound + ' 件';
 };
 
 
