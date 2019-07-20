@@ -116,17 +116,34 @@ form button {
   content: "⇒ ";
 }
 
-.s-result {
+#s-result {
+  visibility: hidden;
   width: 80%;
   margin: 30px auto 0px auto;
   display: grid;
   grid-template-columns: 50px 1fr 1fr 50px;
 }
 
-.prev-page {
-  text-align: left;
+.page-move-btn {
+  text-align: center;
+  display: inline-block;
+  padding: 0.3em 1em;
+  text-decoration: none;
+  color: #67c5ff;
+  border: solid 2px #67c5ff;
+  border-radius: 3px;
+  transition: .4s;
+}
+.page-move-btn:hover {
+  background: #67c5ff;
+  color: white;
 }
 
-.next-page {
-  text-align: right;
+.rss-title {
+  font-size: small;
+  font-weight: bold;
+}
+
+#search-result-num {
+  margin-left: 10px;
 }

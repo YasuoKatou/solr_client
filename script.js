@@ -1,4 +1,3 @@
-
 /****
  * 検索条件設定ページの定義
  * @since 2019/5/28
@@ -10,22 +9,22 @@ var _s_form_inp = [
    , class: 'inp-required'
    , label: {text: '検索ワード', class: 'title'}
   }
-, {  type: 'inp-date'
-   , name: 'last-update'
-   , class: 'inp-required'
-   , label: {text: '更新日', class: 'title'}
-  }
+// , {  type: 'inp-date'
+//    , name: 'last-update'
+//    , class: 'inp-required'
+//    , label: {text: '更新日', class: 'title'}
+//   }
 ];
 var _s_form_btn = [
-  {  type: 'inp-submit', id: 'btn-search-doc', text: '文書検索'}
-, {  type: 'inp-submit', id: 'btn-search-rss', text: 'RSS検索'}
-, {  type: 'inp-reset', text: 'クリア'}
+//  {  type: 'inp-submit', id: 'btn-search-doc', text: '文書検索'}
+  {  type: 'inp-submit', id: 'btn-search-rss', text: 'Web検索'}
+// , {  type: 'inp-reset', text: 'クリア'}
 ];
 var _s_result_status = [
-  {  type: 'pre', text: '前', class: 'prev-page'}
+  {  type: 'a', href: '#', text: '前', class: 'page-move-btn', id: 'prev-result'}
 , {  type: 'pre', text: '結果件数', id: 'search-result-num'}
 , {  type: 'pre', text: '検索時間', id: 'search-time'}
-, {  type: 'pre', text: '次', class: 'next-page'}
+, {  type: 'a', href: '#', text: '次', class: 'page-move-btn', id: 'next-result'}
 ];
 
 var s_page_def = {
@@ -48,7 +47,7 @@ var s_page_def = {
     }
   , {
        type: 'block'
-     , class: 's-result'
+     , id: 's-result'
      , child: _s_result_status
     }
   , {  type: 'pre'
@@ -84,6 +83,17 @@ var r_item_hl = {
  , position: 'beforeend'
  , content: ''
 };
+var r_rss_title = {
+  type: 'div'
+, class: 'rss-title'
+, position: 'beforeend'
+, text: ''
+};
+var r_rss_summary = {
+  type: 'html'
+  , position: 'beforeend'
+  , content: ''
+ };
 
 /****
  * 各ページの定義
@@ -120,8 +130,6 @@ var view_root = {
     ]
 };
 
-
-
 /** ***********************************
  * アプリケーション
  */
@@ -129,6 +137,7 @@ function MyApp(apConfig) {
   this.apConfig = apConfig;
   this.event = {};
   this.fw = undefined;
+  this.pageOffset = 0;
 };
 /**
  * アプリケーションを開始する.
@@ -278,7 +287,7 @@ MyApp.prototype.serverComm4Rss = function(self, path, proc) {
  * @since 2019/5/28
  */
 MyApp.prototype.editSearchRequest = function(self, vals) {
-  return 'q=' + encodeURI(vals['search-word']);
+  return 'q=' + encodeURI(vals['search-word']) + '&start=' + self.pageOffset;
 };
 /**
  * 文書検索行う.
@@ -321,6 +330,7 @@ MyApp.prototype.docSearchResult = function(self, rxData) {
     link['href'] = '#';
     link['text'] = wk[wk.length-1];
     item['data'] = {resource: path};
+    // タイトル
     var hl = fw.deepCopy(r_item_hl);
     var c = rxData.highlighting[rec.id].content;
     if (c) {
@@ -398,30 +408,41 @@ MyApp.prototype.rssSearchResult = function(self, rxData) {
   var view = r_item_view;
   view['child'] = [];
   var fw = self.fw;
+  var pnv = false;
   for (var rec of rxData.response.docs) {
     var item = fw.deepCopy(r_item);
     item['child'] = [];
-  //   if (!('attr_resourcename' in rec)) {
-  //     console.log('no attr_resourcename\n' + rec);
-  //     continue;
-  //   }
-  //   var wk = path.split('\\');
-    // var link = fw.deepCopy(r_item_link);
-    // link['href'] = '#';
-  //   link['text'] = wk[wk.length-1];
     item['data'] = {resource: rec.og_url};
-    var hl = fw.deepCopy(r_item_hl);
-    hl.content = self.editForResult(rec.title[0]);
-    item['child'].push(hl);
-    // item['child'].push(link);
+    // タイトル
+    var ttl = fw.deepCopy(r_rss_title);
+    ttl.text = rec.title[0];
+    item['child'].push(ttl);
+    // サマリ
+    if ('summary' in rec) {
+      var hls = fw.deepCopy(r_rss_summary);
+      hls.content = rec.summary;
+      item['child'].push(hls);
+    }
     view['child'].push(item);
+    pnv = true;
   }
   var elm = fw.make_view(fw, view);
+
+  var pgs = parseInt(('start' in rxData.responseHeader.params) ? rxData.responseHeader.params.start : '0', 10);
+  var rws = parseInt(('rows'  in rxData.responseHeader.params) ? rxData.responseHeader.params.rows : '10', 10);
 
   var elm = document.getElementById('search-time');
   elm.innerText = '検索時間 : ' + rxData.responseHeader.QTime + ' ms';
   elm = document.getElementById('search-result-num');
-  elm.innerText = rxData.response.numFound + ' 件';
+  elm.innerText = rxData.response.numFound + ' 件 (' + (pgs+1) + ' - ' + (pgs+rws) + ')';
+  if (pgs == 0) {
+    elm = document.getElementById('s-result');
+    if (pnv) {
+      elm.style.visibility = 'visible';
+    } else {
+      elm.style.visibility = 'hidden';
+    }
+  }
 };
 
 
@@ -449,6 +470,7 @@ _evtMap.push({
 , id_targets: ['btn-search-doc']
 , process: function(fw, evt, target, app) {
     // 検索処理
+    app.pageOffset = 0;
     var vals = fw.findFormValues(fw, target);
     app.EM_doSearch_doc(app, vals);
   }
@@ -462,6 +484,7 @@ _evtMap.push({
 , id_targets: ['btn-search-rss']
 , process: function(fw, evt, target, app) {
     // 検索処理
+    app.pageOffset = 0;
     var vals = fw.findFormValues(fw, target);
     app.EM_doSearch_rss(app, vals);
   }
@@ -476,6 +499,35 @@ _evtMap.push({
 , process: function(fw, evt, target, app) {
     //console.log(target);
     app.EM_selectResultItem(app, target);
+  }
+});
+/**
+ * 【イベント定義】検索結果の次頁
+ * @since 2019/7/18
+ */
+_evtMap.push({
+  type: 'click'
+, id_targets: ['next-result']
+, process: function(fw, evt, target, app) {
+    //console.log(target);
+    app.pageOffset = app.pageOffset + 10;
+    //TODO 文書検査にも対応させること
+    app.EM_doSearch_rss(app, target);
+  }
+});
+/**
+ * 【イベント定義】検索結果の前頁
+ * @since 2019/7/18
+ */
+_evtMap.push({
+  type: 'click'
+, id_targets: ['prev-result']
+, process: function(fw, evt, target, app) {
+    //console.log(target);
+    app.pageOffset = app.pageOffset - 10;
+    if (app.pageOffset < 0) app.pageOffset = 0;
+    //TODO 文書検査にも対応させること
+    app.EM_doSearch_rss(app, target);
   }
 });
 
@@ -510,7 +562,7 @@ var _ap_config = {
 , server_uri: 'http://localhost:8983/solr/ykato/select'
 */
 , uri_rss: '/solr/web_test/select'
-, rss_search_options: '&fl=id%2Cog_url%2Ctitle'
+, rss_search_options: '&fl=id%2Cog_url%2Ctitle%2Csummary'
 , request_header: {}
 , comm_timer: 10000
 
