@@ -512,7 +512,9 @@ _evtMap.push({
     //console.log(target);
     app.pageOffset = app.pageOffset + 10;
     //TODO 文書検査にも対応させること
-    app.EM_doSearch_rss(app, target);
+    var btn = document.getElementById('btn-search-rss');
+    var vals = fw.findFormValues(fw, btn);
+    app.EM_doSearch_rss(app, vals);
   }
 });
 /**
@@ -527,7 +529,9 @@ _evtMap.push({
     app.pageOffset = app.pageOffset - 10;
     if (app.pageOffset < 0) app.pageOffset = 0;
     //TODO 文書検査にも対応させること
-    app.EM_doSearch_rss(app, target);
+    var btn = document.getElementById('btn-search-rss');
+    var vals = fw.findFormValues(fw, btn);
+    app.EM_doSearch_rss(app, vals);
   }
 });
 
@@ -562,7 +566,7 @@ var _ap_config = {
 , server_uri: 'http://localhost:8983/solr/ykato/select'
 */
 , uri_rss: '/solr/web_test/select'
-, rss_search_options: '&fl=id%2Cog_url%2Ctitle%2Csummary'
+, rss_search_options: '&fl=id%2Cog_url%2Ctitle%2Csummary&sort=article_modified_time%20desc'
 , request_header: {}
 , comm_timer: 10000
 
