@@ -566,7 +566,7 @@ var _ap_config = {
 , server_uri: 'http://localhost:8983/solr/ykato/select'
 */
 , uri_rss: '/solr/web_test/select'
-, rss_search_options: '&fl=id%2Cog_url%2Ctitle%2Csummary&sort=article_modified_time%20desc'
+, rss_search_options: '&fl=id%2Cog_url%2Ctitle%2Csummary&sort=pubdateiso%20desc'
 , request_header: {}
 , comm_timer: 10000
 

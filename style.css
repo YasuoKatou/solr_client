@@ -104,6 +104,9 @@ form button {
   margin: 1em auto 0 auto;
   font-size: 90%;
 }
+.result-item:nth-child(2n+1) {
+  background-color: #FFEEFF;
+}
 
 /**
  * 検索結果のアンカータグ
