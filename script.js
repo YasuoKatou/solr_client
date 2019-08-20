@@ -286,8 +286,15 @@ MyApp.prototype.serverComm4Rss = function(self, path, proc) {
  * URI文字列に変換する.
  * @since 2019/5/28
  */
-MyApp.prototype.editSearchRequest = function(self, vals) {
+MyApp.prototype.editSearchRequest4Doc = function(self, vals) {
   return 'q=' + encodeURI(vals['search-word']) + '&start=' + self.pageOffset;
+};
+/**
+ * URI文字列に変換する(RSS用).
+ * @since 2019/5/28
+ */
+MyApp.prototype.editSearchRequest4Rss = function(self, vals) {
+  return 'q=description' + encodeURI(':' + vals['search-word']) + '&start=' + self.pageOffset;
 };
 /**
  * 文書検索行う.
@@ -301,7 +308,7 @@ MyApp.prototype.EM_doSearch_doc = function(self, vals) {
     return;
   }
   // リクエストデータの編集
-  req = self.editSearchRequest(self, vals);
+  req = self.editSearchRequest4Doc(self, vals);
   console.log(req);
   // サーバに検索要求
   self.serverComm4Doc(self, req, self.docSearchResult);
@@ -392,7 +399,7 @@ MyApp.prototype.EM_doSearch_rss = function(self, vals) {
     return;
   }
   // リクエストデータの編集
-  req = self.editSearchRequest(self, vals);
+  req = self.editSearchRequest4Rss(self, vals);
   console.log(req);
   // サーバに検索要求
   self.serverComm4Rss(self, req, self.rssSearchResult);
